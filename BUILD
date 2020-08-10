@@ -16,27 +16,37 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])  # Apache 2.0
 
+load("@com_google_emboss//:build_defs.bzl", "emboss_cc_library")
+
 cc_library(
-    name = "minecraft_rcon",
-    srcs = ["minecraft_rcon.cc"],
-    hdrs = ["minecraft_rcon.h"],
+    name = "rcon",
+    srcs = ["rcon.cc"],
+    hdrs = ["rcon.h"],
     deps = [
+        ":packet",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
     ],
 )
 
 cc_binary(
-    name = "minecraft_rcon_main",
-    srcs = ["minecraft_rcon_main.cc"],
+    name = "minecraft_rcon",
+    srcs = ["main.cc"],
     deps = [
-        ":minecraft_rcon",
+        ":packet",
+        ":rcon",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/strings",
     ],
+)
+
+emboss_cc_library(
+    name = "packet",
+    srcs = ["packet.emb"],
 )

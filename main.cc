@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
 #include <string>
 
 #include "absl/flags/flag.h"
@@ -19,19 +20,22 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "minecraft_rcon.h"
+#include "packet.emb.h"
+#include "rcon.h"
 
-ABSL_FLAG(std::string, address, "", "Rcon address.");
-ABSL_FLAG(uint16_t, port, 0, "Rcon port.");
+ABSL_FLAG(std::string, address, "", "RCON address, in the form host:port.");
+ABSL_FLAG(std::string, password, "", "RCON password.");
 
 int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
 
   const std::string address = absl::GetFlag(FLAGS_address);
   ABSL_RAW_CHECK(!address.empty(), "Missing required --address.");
-  const uint16_t port = absl::GetFlag(FLAGS_port);
-  ABSL_RAW_CHECK(port > 0, "Missing required --port.");
 
-  auto rcon = minecraft_rcon::MinecraftRcon::New();
-  rcon->Send("foo");
+  const std::string password = absl::GetFlag(FLAGS_password);
+  ABSL_RAW_CHECK(!password.empty(), "Missing required --password.");
+
+  auto rcon = minecraft_rcon::MinecraftRcon::New(address, password);
+  std::cout << rcon->Send(minecraft_rcon::PacketType::RCON_AUTHENTICATE, "foo")
+            << std::endl;
 }

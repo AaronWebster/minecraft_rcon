@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "absl/strings/string_view.h"
+#include "packet.emb.h"
 
 namespace minecraft_rcon {
 
@@ -22,9 +23,13 @@ class MinecraftRcon {
  public:
   virtual ~MinecraftRcon() = default;
 
-  static std::unique_ptr<MinecraftRcon> New();
+  // Returns a new instance.
+  static std::unique_ptr<MinecraftRcon> New(absl::string_view address,
+                                            absl::string_view password);
 
-  virtual void Send(absl::string_view message) = 0;
+  // Sends a command and returns the server's response.
+  virtual std::string Send(PacketType packet_type,
+                           absl::string_view command) = 0;
 };
 
 }  // namespace minecraft_rcon
