@@ -36,6 +36,9 @@ int main(int argc, char** argv) {
   ABSL_RAW_CHECK(!password.empty(), "Missing required --password.");
 
   auto rcon = minecraft_rcon::MinecraftRcon::New(address, password);
-  std::cout << rcon->Send(minecraft_rcon::PacketType::RCON_AUTHENTICATE, "foo")
+  std::cout << rcon->Send(minecraft_rcon::PacketType::RCON_AUTHENTICATE,
+                          password)
+            << std::endl;
+  std::cout << rcon->Send(minecraft_rcon::PacketType::RCON_EXEC_COMMAND, "list")
             << std::endl;
 }

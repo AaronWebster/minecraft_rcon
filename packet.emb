@@ -18,5 +18,4 @@ struct Packet:
   0         [+4]       Int         size
   4         [+4]       Int         id
   8         [+4]       PacketType  packet_type
-  12        [+size-4]  UInt:8[]    body
-  12+size-4 [+1]       UInt:8[]    packet_end
+  12        [+size-8]  UInt:8[]    body

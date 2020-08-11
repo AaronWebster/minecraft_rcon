@@ -34,10 +34,6 @@
 namespace minecraft_rcon {
 namespace {
 
-#define PCHECK(expression)   \
-  ABSL_RAW_CHECK(expression, \
-                 absl::StrFormat("haldo %s", std::strerror(errno)).c_str())
-
 constexpr std::size_t kMaxPacketSize = 4096;
 
 class MinecraftRconImpl : public MinecraftRcon {
@@ -51,8 +47,10 @@ class MinecraftRconImpl : public MinecraftRcon {
     addrinfo *info = nullptr;
     std::pair<std::string, std::string> host_and_port =
         absl::StrSplit(address, ":");
-    PCHECK(getaddrinfo(host_and_port.first.c_str(),
-                       host_and_port.second.c_str(), &hints, &info) == 0);
+    ABSL_RAW_CHECK(
+        getaddrinfo(host_and_port.first.c_str(), host_and_port.second.c_str(),
+                    &hints, &info) == 0,
+        "");
 
     for (addrinfo *p = info; p != nullptr; p = p->ai_next) {
       fd_ = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
@@ -65,7 +63,7 @@ class MinecraftRconImpl : public MinecraftRcon {
         break;
       }
     }
-    PCHECK(fd_ != -1);
+    ABSL_RAW_CHECK(fd_ != -1, "");
     freeaddrinfo(info);
 
     std::cout << "Connected to " << address << std::endl;
@@ -80,23 +78,20 @@ class MinecraftRconImpl : public MinecraftRcon {
         absl::Uniform<int32_t>(bitgen_, std::numeric_limits<int32_t>::lowest(),
                                std::numeric_limits<int32_t>::max());
 
-    {
-      auto buf = std::vector<uint8_t>(body.size() + 14);
-      auto packet = MakePacketView(&buf);
-      packet.size().Write(buf.size() - 4);
-      packet.id().Write(id);
-      packet.packet_type().Write(packet_type);
-      body.copy(reinterpret_cast<char *>(packet.body().BackingStorage().data()),
-                body.size());
-      PCHECK(write(fd_,
-                   reinterpret_cast<char *>(packet.BackingStorage().data()),
-                   packet.SizeInBytes()) != -1);
-    }
+    auto request_buf = std::vector<uint8_t>(body.size() + 14);
+    auto request = MakePacketView(&request_buf);
+    request.size().Write(request_buf.size() - 4);
+    request.id().Write(id);
+    request.packet_type().Write(packet_type);
+    body.copy(reinterpret_cast<char *>(request.body().BackingStorage().data()),
+              body.size());
+    write(fd_, request_buf.data(), request_buf.size());
+    std::cout << ::emboss::WriteToString(request) << std::endl;
 
-    auto buf = std::vector<uint8_t>(kMaxPacketSize);
-    auto packet = MakePacketView(&buf);
-    PCHECK(read(fd_, reinterpret_cast<char *>(packet.BackingStorage().data()),
-                kMaxPacketSize) != -1);
+    auto response_buf = std::vector<uint8_t>(kMaxPacketSize);
+    recv(fd_, response_buf.data(), response_buf.size(), 0);
+    auto response = MakePacketView(&response_buf);
+    std::cout << ::emboss::WriteToString(response) << std::endl;
     return "";
   }
 
